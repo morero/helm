@@ -5,9 +5,11 @@ repositories:
    url: https://grafana.github.io/helm-charts
  - name: bitnami
    url: https://charts.bitnami.com/bitnami
+ - name: jetstack
+   url: https://charts.jetstack.io
 
 releases:
-- name:cilium
+- name: cilium
   namespace: kube-system
   chart: basic-bundle/cilium
   set:
@@ -22,6 +24,7 @@ releases:
 - name: grafana-operator
   namespace: monitoring
   chart: bitnami/grafana-operator
+  disableOpenAPIValidation: true
   set:
 #  - name: rbac.create
 #    value: false
@@ -31,9 +34,9 @@ releases:
   set:
 #  - name: rbac.create
 #    value: false
-- name: prometheus
-  namespace: monitoring
-  chart: basic-bundle/prometheus
+- name: cert-manager
+  namespace: cert-manager
+  chart: jetstack/cert-manager
   set:
 #  - name: rbac.create
 #    value: false
