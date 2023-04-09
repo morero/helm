@@ -1,0 +1,11 @@
+repositories:
+ - name: basic-bundle
+   url: git+ssh://git@github.com/morero/helm@charts?ref=main
+
+releases:
+- name: prometheus
+  namespace: monitoring
+  chart: basic-bundle/prometheus
+  set:
+#  - name: rbac.create
+#    value: false

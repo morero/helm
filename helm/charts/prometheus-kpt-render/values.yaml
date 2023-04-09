@@ -1058,7 +1058,7 @@ networkPolicy:
   enabled: false
 
 # Force namespace of namespaced resources
-forceNamespace: ""
+forceNamespace: "" # { "$kpt-set" : "test-namespace" }
 
 # Extra manifests to deploy as an array
 extraManifests: []
@@ -1088,9 +1088,6 @@ alertmanager:
     runAsNonRoot: true
     runAsGroup: 65534
     fsGroup: 65534
-
-  service:
-    servicePort: 12000
 
 ## kube-state-metrics sub-chart configurable values
 ## Please see https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-state-metrics
