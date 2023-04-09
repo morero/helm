@@ -1,8 +1,36 @@
 repositories:
  - name: basic-bundle
    url: git+ssh://git@github.com/morero/helm@charts?ref=main
+ - name: grafana
+   url: https://grafana.github.io/helm-charts
+ - name: bitnami
+   url: https://charts.bitnami.com/bitnami
 
 releases:
+- name:cilium
+  namespace: kube-system
+  chart: basic-bundle/cilium
+  set:
+#  - name: rbac.create
+#    value: false
+- name: prometheus
+  namespace: monitoring
+  chart: basic-bundle/prometheus
+  set:
+#  - name: rbac.create
+#    value: false
+- name: grafana-operator
+  namespace: monitoring
+  chart: bitnami/grafana-operator
+  set:
+#  - name: rbac.create
+#    value: false
+- name: loki
+  namespace: monitoring
+  chart: bitnami/grafana-loki
+  set:
+#  - name: rbac.create
+#    value: false
 - name: prometheus
   namespace: monitoring
   chart: basic-bundle/prometheus
