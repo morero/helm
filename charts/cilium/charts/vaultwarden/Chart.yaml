@@ -1,0 +1,29 @@
+annotations:
+  category: DeveloperTools
+apiVersion: v2
+appVersion: 1.27.0
+dependencies:
+- condition: postgresql.enabled
+  name: postgresql
+  repository: https://charts.bitnami.com/bitnami
+  version: 12.x.x
+- name: common
+  repository: https://charts.bitnami.com/bitnami
+  tags:
+  - bitnami-common
+  version: 2.x.x
+description: Vaultwarden is an unofficial Bitwarden-compatible server written in Rust
+home: https://lab.frogg.it/captnbp/vaultwarden-helm
+icon: https://yunohost.org/user/images/bitwarden_logo.png
+keywords:
+- Rust
+- vaultwarden
+maintainers:
+- email: benoit.pourre@gmail.com
+  name: Benoît Pourre
+  url: https://github.com/captnbp
+name: vaultwarden
+sources:
+- https://lab.frogg.it/captnbp/vaultwarden-helm
+- https://github.com/dani-garcia/vaultwarden
+version: 0.1.5
