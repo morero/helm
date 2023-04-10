@@ -1,5 +1,12 @@
+commonLabels:
+  helmfile-bundle: "basic:0.0.1"
+
+
 repositories:
+ - name: mittwald
+   url: https://helm.mittwald.de
  - name: basic-bundle
+   # git+ssh means that the helmfile should use a git repo. see @charts for path
    url: git+ssh://git@github.com/morero/helm@charts?ref=main
  - name: grafana
    url: https://grafana.github.io/helm-charts
@@ -8,20 +15,30 @@ repositories:
  - name: jetstack
    url: https://charts.jetstack.io
 
+
 releases:
 - name: cilium
   namespace: kube-system
   chart: basic-bundle/cilium
+  condition: cilium.enabled
+  set:
+#  - name: rbac.create
+#    value: false
+- name: replicator
+  namespace: kube-system
+  chart: mittwald/kubernetes-replicator
   set:
 #  - name: rbac.create
 #    value: false
 - name: prometheus
+  condition: monitoring.enabled
   namespace: monitoring
-  chart: basic-bundle/prometheus
+  chart: basic-bundle/kube-prometheus
   set:
 #  - name: rbac.create
 #    value: false
 - name: grafana-operator
+  condition: monitoring.enabled
   namespace: monitoring
   chart: bitnami/grafana-operator
   disableOpenAPIValidation: true
@@ -29,6 +46,7 @@ releases:
 #  - name: rbac.create
 #    value: false
 - name: loki
+  condition: monitoring.enabled
   namespace: monitoring
   chart: bitnami/grafana-loki
   set:
@@ -40,3 +58,12 @@ releases:
   set:
 #  - name: rbac.create
 #    value: false
+---
+environments:
+  # The "default" environment is available and used when `helmfile` is run without `--environment NAME`.
+  default:
+    values:
+    - monitoring:
+        enabled: true
+    - cilium:
+        enabled: true
