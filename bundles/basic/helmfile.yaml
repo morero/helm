@@ -40,7 +40,7 @@ releases:
 - name: grafana-operator
   condition: monitoring.enabled
   namespace: monitoring
-  chart: bitnami/grafana-operator
+  chart: basic-bundle/grafana-operator
   disableOpenAPIValidation: true
   set:
 #  - name: rbac.create
@@ -48,7 +48,7 @@ releases:
 - name: loki
   condition: monitoring.enabled
   namespace: monitoring
-  chart: bitnami/grafana-loki
+  chart: basic-bundle/grafana-loki
   set:
 #  - name: rbac.create
 #    value: false

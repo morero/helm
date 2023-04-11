@@ -177,7 +177,7 @@ operator:
   ## ensure that the operator is able to get data from other namespaces.
   ## The options are mutually exclusive.
   ##
-  scanAllNamespaces: false
+  scanAllNamespaces: True
   scanNamespaces: []
   zapDevel: false
   zapEncoder: ""
