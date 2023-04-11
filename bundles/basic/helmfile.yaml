@@ -7,7 +7,7 @@ repositories:
    url: https://helm.mittwald.de
  - name: basic-bundle
    # git+ssh means that the helmfile should use a git repo. see @charts for path
-   url: git+https://git@github.com/morero/helm@charts?ref=main
+   url: https://git@github.com/morero/helm@charts?ref=main
  - name: grafana
    url: https://grafana.github.io/helm-charts
  - name: bitnami
