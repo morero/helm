@@ -1,0 +1,9 @@
+{{/* in env-magic.gotmpl */}}
+
+{{/* 
+extract both global and <release-name> sections from
+.Values, and merge them (giving precedence to release
+specific values.
+Note: missing entries are fine.
+*/}}
+{{ merge (.Values | get .Release.Name  dict) (.Values | get "global"  dict) | toYaml }}

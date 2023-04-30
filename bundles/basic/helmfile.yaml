@@ -15,55 +15,53 @@ repositories:
  - name: jetstack
    url: https://charts.jetstack.io
 
-
 releases:
 - name: cilium
   namespace: kube-system
   chart: basic-bundle/cilium
   condition: cilium.enabled
-  set:
-#  - name: rbac.create
-#    value: false
+  values:
+    - &env env-magic.gotmpl # use a YAML anchor for DRYness
 - name: replicator
   namespace: kube-system
   chart: mittwald/kubernetes-replicator
-  set:
-#  - name: rbac.create
-#    value: false
+  values:
+    - *env # reference the anchor
 - name: prometheus
   condition: monitoring.enabled
   namespace: monitoring
   chart: basic-bundle/kube-prometheus
-  set:
-#  - name: rbac.create
-#    value: false
+  values:
+    - *env # reference the anchor
 - name: grafana-operator
   condition: monitoring.enabled
   namespace: monitoring
   chart: basic-bundle/grafana-operator
   disableOpenAPIValidation: true
-  set:
-#  - name: rbac.create
-#    value: false
+  values:
+    - *env # reference the anchor
 - name: loki
   condition: monitoring.enabled
   namespace: monitoring
   chart: basic-bundle/grafana-loki
-  set:
-#  - name: rbac.create
-#    value: false
+  values:
+    - *env # reference the anchor
 - name: cert-manager
-  namespace: cert-manager
+  #namespace: cert-manager
   chart: jetstack/cert-manager
-  set:
-#  - name: rbac.create
-#    value: false
----
+  values:
+    - *env # reference the anchor
+- name: cert-issuers
+  namespace: cert-manager
+  chart: ../../charts/cert-issuers 
+  values:
+    - *env # reference the anchor
+
 environments:
-  # The "default" environment is available and used when `helmfile` is run without `--environment NAME`.
   default:
     values:
-    - monitoring:
-        enabled: true
-    - cilium:
-        enabled: true
+      - environments/default/values.yaml
+  local:
+    values: # apply default first, then prod
+      - environments/default/values.yaml 
+      - environments/local/values.yaml

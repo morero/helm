@@ -1,0 +1,15 @@
+cilium:
+  enabled: true
+
+cert-manager:
+  enabled: true
+
+
+monitoring:
+  enabled: true
+
+cert-issuers:
+  letsencrypt: 
+    enabled: true
+  zerossl: 
+    enabled: true
