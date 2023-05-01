@@ -1,8 +1,8 @@
 cilium:
-  enabled: true
+  enabled: false
 
 cert-manager:
-  enabled: true
+  enabled: false
 
 
 monitoring:
@@ -10,6 +10,9 @@ monitoring:
 
 cert-issuers:
   letsencrypt: 
-    enabled: true
+    enabled: false
   zerossl: 
-    enabled: true
+    enabled: false
+
+prometheus: 
+  retentionSize: 1Gi

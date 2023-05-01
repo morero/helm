@@ -47,11 +47,13 @@ releases:
   values:
     - *env # reference the anchor
 - name: cert-manager
-  #namespace: cert-manager
+  condition: cert-manager.enabled
+  namespace: cert-manager
   chart: jetstack/cert-manager
   values:
     - *env # reference the anchor
 - name: cert-issuers
+  condition: cert-manager.enabled
   namespace: cert-manager
   chart: ../../charts/cert-issuers 
   values:
