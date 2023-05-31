@@ -1,0 +1,86 @@
+version: 0.25.0
+
+# General options
+.options: &options
+  wait: true
+  wait_for_jobs: true
+  force: false
+  timeout: 10m
+  atomic: false
+  max_history: 3
+  create_namespace: true
+
+releases:
+- name: cilium
+  namespace: kube-system
+  chart: helmwave/cilium
+  condition: cilium.enabled
+  values:
+    # Default
+    - environments/default/_.yml
+    # For specific ENVIRONMENT
+    - environment/{{ requiredEnv "CI_ENVIRONMENT_NAME" }}/_.yml
+- name: replicator
+  namespace: kube-system
+  chart: helmwave/kubernetes-replicator
+  condition: replicator.enabled
+  values:
+    # Default
+    - environments/default/_.yml
+    # For specific ENVIRONMENT
+    - environment/{{ requiredEnv "CI_ENVIRONMENT_NAME" }}/_.yml
+- name: prometheus
+  condition: prometheus.enabled
+  namespace: monitoring
+  chart: helmwave/kube-prometheus
+  values:
+    # Default
+    - environments/default/_.yml
+    # For specific ENVIRONMENT
+    - environment/{{ requiredEnv "CI_ENVIRONMENT_NAME" }}/_.yml
+- name: grafana-operator
+  condition: grafana.enabled
+  namespace: monitoring
+  chart: helmwave/grafana-operator
+  disableOpenAPIValidation: true
+  values:
+    # Default
+    - environments/default/_.yml
+    # For specific ENVIRONMENT
+    - environment/{{ requiredEnv "CI_ENVIRONMENT_NAME" }}/_.yml
+- name: loki
+  condition: loki.enabled
+  namespace: monitoring
+  chart: helmwave/grafana-loki
+  values:
+    # Default
+    - environments/default/_.yml
+    # For specific ENVIRONMENT
+    - environment/{{ requiredEnv "CI_ENVIRONMENT_NAME" }}/_.yml
+- name: cert-manager
+  condition: cert-manager.enabled
+  namespace: cert-manager
+  chart: helmwave/cert-manager
+  values:
+    # Default
+    - environments/default/_.yml
+    # For specific ENVIRONMENT
+    - environment/{{ requiredEnv "CI_ENVIRONMENT_NAME" }}/_.yml
+#- name: cert-issuers
+#  condition: cert-manager.enabled
+#  namespace: cert-manager
+#  chart: helmwave/cert-issuers 
+#  values:
+#    # Default
+#    - environments/default/_.yml
+#    # For specific ENVIRONMENT
+#    - environment/{{ requiredEnv "CI_ENVIRONMENT_NAME" }}/_.yml
+- name: vector
+  condition: vector.enabled
+  namespace: monitoring
+  chart: helmwave/vector
+  values:
+    # Default
+    - environments/default/_.yml
+    # For specific ENVIRONMENT
+    - environment/{{ requiredEnv "CI_ENVIRONMENT_NAME" }}/_.yml

@@ -1,0 +1,215 @@
+---
+# Source: vector/templates/serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: vector
+  labels:
+    helm.sh/chart: vector-0.21.1
+    app.kubernetes.io/name: vector
+    app.kubernetes.io/instance: vector
+    app.kubernetes.io/component: Aggregator
+    app.kubernetes.io/version: "0.29.1-distroless-libc"
+    app.kubernetes.io/managed-by: Helm
+    
+automountServiceAccountToken: true
+---
+# Source: vector/templates/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vector
+  labels:
+    helm.sh/chart: vector-0.21.1
+    app.kubernetes.io/name: vector
+    app.kubernetes.io/instance: vector
+    app.kubernetes.io/component: Aggregator
+    app.kubernetes.io/version: "0.29.1-distroless-libc"
+    app.kubernetes.io/managed-by: Helm
+    
+data:
+  vector.yaml: |
+    sinks:
+      loki:
+        encoding:
+          codec: json
+        endpoint: http://loki-grafana-loki-gateway.monitoring.svc.cluster.local
+        inputs:
+        - var_logs
+        - demo_logs
+        labels:
+          host: '{{ host }}'
+          job: logs
+          source: '{{ source_type }}'
+        type: loki
+      prometheus:
+        address: 0.0.0.0:9598
+        inputs:
+        - host_metrics
+        - internal_metrics
+        type: prometheus_exporter
+    sources:
+      demo_logs:
+        format: json
+        type: demo_logs
+      host_metrics:
+        type: host_metrics
+      internal_metrics:
+        type: internal_metrics
+      var_logs:
+        include:
+        - /kubelogs/**/*.log
+        type: file
+---
+# Source: vector/templates/service-headless.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: vector-headless
+  labels:
+    helm.sh/chart: vector-0.21.1
+    app.kubernetes.io/name: vector
+    app.kubernetes.io/instance: vector
+    app.kubernetes.io/component: Aggregator
+    app.kubernetes.io/version: "0.29.1-distroless-libc"
+    app.kubernetes.io/managed-by: Helm
+    
+  annotations:
+spec:
+  clusterIP: None
+  ports:    
+    - name: prometheus
+      port: 9598
+      protocol: TCP
+      targetPort: 9598
+  selector:
+    app.kubernetes.io/name: vector
+    app.kubernetes.io/instance: vector
+    app.kubernetes.io/component: Aggregator
+  type: ClusterIP
+---
+# Source: vector/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: vector
+  labels:
+    helm.sh/chart: vector-0.21.1
+    app.kubernetes.io/name: vector
+    app.kubernetes.io/instance: vector
+    app.kubernetes.io/component: Aggregator
+    app.kubernetes.io/version: "0.29.1-distroless-libc"
+    app.kubernetes.io/managed-by: Helm
+    
+  annotations:
+spec:
+  ports:    
+    - name: prometheus
+      port: 9598
+      protocol: TCP
+      targetPort: 9598
+  selector:
+    app.kubernetes.io/name: vector
+    app.kubernetes.io/instance: vector
+    app.kubernetes.io/component: Aggregator
+  type: ClusterIP
+---
+# Source: vector/templates/statefulset.yaml
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: vector
+  labels:
+    helm.sh/chart: vector-0.21.1
+    app.kubernetes.io/name: vector
+    app.kubernetes.io/instance: vector
+    app.kubernetes.io/component: Aggregator
+    app.kubernetes.io/version: "0.29.1-distroless-libc"
+    app.kubernetes.io/managed-by: Helm
+    
+  annotations:
+    {}
+spec:
+  replicas: 1
+  podManagementPolicy: OrderedReady
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: vector
+      app.kubernetes.io/instance: vector
+      app.kubernetes.io/component: Aggregator
+  serviceName: vector-headless
+  template:
+    metadata:
+      annotations:
+        checksum/config: 01492d40fab99531b342f23f4bbba9a2eb0b4b2b6e26c20243b23fc89eb441d6
+      labels:
+        app.kubernetes.io/name: vector
+        app.kubernetes.io/instance: vector
+        app.kubernetes.io/component: Aggregator
+        vector.dev/exclude: "true"
+    spec:
+      serviceAccountName: vector
+      dnsPolicy: ClusterFirst
+      containers:
+        - name: vector
+          image: "timberio/vector:0.29.1-distroless-libc"
+          imagePullPolicy: IfNotPresent
+          args:
+            - --config-dir
+            - /etc/vector/
+          env:
+          ports:      
+            - name: prometheus
+              containerPort: 9598
+              protocol: TCP
+          volumeMounts:
+            - name: data
+              mountPath: "/vector-data-dir"
+            - name: config
+              mountPath: "/etc/vector/"
+              readOnly: true
+            - mountPath: /kubelogs
+              name: varlogs
+              readOnly: true
+      terminationGracePeriodSeconds: 60
+      volumes:
+        - name: data
+          emptyDir: {}
+        - name: config
+          projected:
+            sources:
+              - configMap:
+                  name: vector
+        - hostPath:
+            path: /var/log/
+          name: varlogs
+  volumeClaimTemplates:
+---
+# Source: vector/templates/podmonitor.yaml
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: vector
+  labels:
+    helm.sh/chart: vector-0.21.1
+    app.kubernetes.io/name: vector
+    app.kubernetes.io/instance: vector
+    app.kubernetes.io/component: Aggregator
+    app.kubernetes.io/version: "0.29.1-distroless-libc"
+    app.kubernetes.io/managed-by: Helm
+    
+spec:
+  jobLabel: app.kubernetes.io/name
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: vector
+      app.kubernetes.io/instance: vector
+      app.kubernetes.io/component: Aggregator
+  namespaceSelector:
+    matchNames:
+      - monitoring
+  podMetricsEndpoints:
+    - port: prom-exporter
+      path: /metrics
+      honorLabels: false
+      honorTimestamps: true

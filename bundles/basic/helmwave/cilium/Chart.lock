@@ -1,0 +1,6 @@
+dependencies:
+- name: cilium
+  repository: ""
+  version: 1.13.0
+digest: sha256:ffff366475ba4a8b59e6b95d83b2dcc1a5ff3fd93aef8b2d761b6f81df473135
+generated: "2023-05-18T23:47:42.257039436+02:00"
