@@ -1,0 +1,69 @@
+commonLabels:
+  helmfile-bundle: "basic:0.0.1"
+
+
+repositories:
+ - name: mittwald
+   url: https://helm.mittwald.de
+ - name: basic-bundle
+   # git+ssh means that the helmfile should use a git repo. see @charts for path
+   url: git+ssh://git@github.com/morero/helm@charts?ref=main
+ - name: grafana
+   url: https://grafana.github.io/helm-charts
+ - name: bitnami
+   url: https://charts.bitnami.com/bitnami
+ - name: jetstack
+   url: https://charts.jetstack.io
+
+releases:
+- name: cilium
+  namespace: kube-system
+  chart: basic-bundle/cilium
+  condition: cilium.enabled
+  values:
+    - &env env-magic.gotmpl # use a YAML anchor for DRYness
+- name: replicator
+  namespace: kube-system
+  chart: mittwald/kubernetes-replicator
+  values:
+    - *env # reference the anchor
+- name: prometheus
+  condition: monitoring.enabled
+  namespace: monitoring
+  chart: basic-bundle/kube-prometheus
+  values:
+    - *env # reference the anchor
+- name: grafana-operator
+  condition: monitoring.enabled
+  namespace: monitoring
+  chart: basic-bundle/grafana-operator
+  disableOpenAPIValidation: true
+  values:
+    - *env # reference the anchor
+- name: loki
+  condition: monitoring.enabled
+  namespace: monitoring
+  chart: basic-bundle/grafana-loki
+  values:
+    - *env # reference the anchor
+- name: cert-manager
+  condition: cert-manager.enabled
+  namespace: cert-manager
+  chart: jetstack/cert-manager
+  values:
+    - *env # reference the anchor
+- name: cert-issuers
+  condition: cert-manager.enabled
+  namespace: cert-manager
+  chart: ../../charts/cert-issuers 
+  values:
+    - *env # reference the anchor
+
+environments:
+  default:
+    values:
+      - environments/default/values.yaml
+  local:
+    values: # apply default first, then prod
+      - environments/default/values.yaml 
+      - environments/local/values.yaml

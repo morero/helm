@@ -33,6 +33,7 @@ releases:
   chart: basic-bundle/kube-prometheus
   values:
     - *env # reference the anchor
+  wait: true
 - name: grafana-operator
   condition: monitoring.enabled
   namespace: monitoring
@@ -58,6 +59,51 @@ releases:
   chart: ../../charts/cert-issuers 
   values:
     - *env # reference the anchor
+
+- name: postgres-operator
+  condition: postgres.enabled
+  namespace: postgres
+  chart: basic-bundle/cloudnative-pg
+  values:
+    - *env # reference the anchor
+
+- name: postgres-cluster
+  condition: postgres.enabled
+  namespace: postgres
+  chart: basic-bundle/database-cluster
+  values:
+    - *env # reference the anchor
+
+
+- name: vaultwarden-database
+  condition: vaultwarden.enabled
+  namespace: postgres
+  chart: basic-bundle/database-vaultwarden
+  values:
+    - *env # reference the anchor
+
+- name: vaultwarden
+  condition: vaultwarden.enabled
+  namespace: vaultwarden
+  chart: basic-bundle/vaultwarden
+  values:
+    - *env # reference the anchor
+
+- name: gitea-database
+  condition: gitea.enabled
+  namespace: postgres
+  chart: basic-bundle/database-gitea
+  values:
+    - *env # reference the anchor    
+
+- name: gitea
+  condition: gitea.enabled
+  namespace: gitea
+  chart: basic-bundle/gitea
+  values:
+    - *env # reference the anchor    
+
+
 
 environments:
   default:

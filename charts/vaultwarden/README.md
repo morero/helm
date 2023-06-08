@@ -1,280 +1,189 @@
-# Helm chart for Vaultwarden
+# Gissilabs Helm Charts
 
-[![Helm Release](https://img.shields.io/docker/v/vaultwarden/server/1.26.0)](https://img.shields.io/docker/v/vaultwarden/server/1.26.0)
+## Upgrade from bitwardenrs Helm Chart
 
-[Vaultwarden](https://github.com/dani-garcia/vaultwarden), formerly known as **Bitwarden_RS**, is an "alternative implementation of the Bitwarden server API written in Rust and compatible with [upstream Bitwarden clients](https://bitwarden.com/download/), perfect for self-hosted deployment where running the official resource-heavy service might not be ideal."
+The upstream project changed its name from bitwarden_rs to Vaultwarden on April 27th, 2021. If you are using the bitwardenrs chart, the following changes are needed to use this chart:
 
-## TL;DR
+- Change chart name from gissilabs/bitwardenrs to gissilabs/vaultwarden
+- If using custom values, update top-level "bitwardenrs" option to "vaultwarden"
 
-```console
-$ helm repo add doca https://charts.doca.cloud/charts
+Chart and application version numbers are the same across both charts.
 
-$ helm install my-release doca/vaultwarden
+## Vaultwarden
+
+Vaultwarden (previously known as bitwarden_rs) is an unofficial Bitwarden compatible server written in Rust. For more information, check the project on Github: <https://github.com/dani-garcia/vaultwarden>
+
+## Helm Chart
+
+The default installation will deploy one Vaultwarden instance using a SQLite database without persistence. All data will be lost if the pod is deleted.
+
+```bash
+# Uncomment below if the Gissilabs repository is not yet added to Helm
+#helm repo add gissilabs https://gissilabs.github.io/charts/
+helm install myvaultwarden gissilabs/vaultwarden
 ```
 
-## Prerequisites
+See options below to customize the deployment.
 
-- Kubernetes 1.19+
-- Helm 3.2.0+
-- PV provisioner support in the underlying infrastructure
-- [cert-manager](docs/projects/csi-driver/#supported-volume-attributes)
+## **Database**
 
-## Installing the Chart
+Option | Description | Format | Default
+------ | ----------- | ------ | -------
+database.type | Backend database type | sqlite, mysql or postgresql | sqlite
+database.wal | Enable SQLite Write-Ahead-Log, ignored for external databases | true / false | true
+database.url | URL of external database (MySQL/PostgreSQL) | \[mysql\|postgresql\]://user:pass@host:port\[/database\] | Empty
+database.existingSecret | Use existing secret for database URL, key 'database-url' | Secret name  | Not defined
+database.maxConnections | Set the size of the database connection pool | Number  | 10
+database.retries | Connection retries during startup, 0 for infinite. 1 second between retries | Number | 15
 
-To install the chart with the release name `my-release`:
+## **Main application**
 
-```console
-$ helm repo add doca https://charts.doca.cloud/charts
+Option | Description | Format | Default
+------ | ----------- | ------ | -------
+vaultwarden.domain | Bitwarden URL. Mandatory for invitations over email | http\[s\]://hostname | Not defined
+vaultwarden.allowSignups | Allow any user to sign-up. [More information](https://github.com/dani-garcia/vaultwarden/wiki/Disable-registration-of-new-users) | true / false | true
+vaultwarden.signupDomains | Whitelist domains allowed to sign-up. 'allowSignups' is ignored if set | domain1,domain2 | Not defined
+vaultwarden.verifySignup | Verify e-mail before login is enabled. SMTP must be enabled | true / false | false
+vaultwarden.requireEmail | Require that an e-mail is sucessfully sent before login. SMTP must be enabled | true / false | false
+vaultwarden.emailAttempts | Maximum attempts before an email token is reset and a new email will need to be sent | Number | 3
+vaultwarden.emailTokenExpiration | Email token validity in seconds | Number | 600
+vaultwarden.allowInvitation | Allow invited users to sign-up even feature is disabled. [More information](https://github.com/dani-garcia/vaultwarden/wiki/Disable-invitations) | true / false | true
+vaultwarden.invitationExpiration | Number of hours after which tokens expire (organization invite, emergency access, email verification and deletion request | Number (minimum 1) | 120
+vaultwarden.defaultInviteName | Default organization name in invitation e-mails that are not coming from a specific organization. | Text | Vaultwarden
+vaultwarden.passwordHintsAllowed | Allow users to set password hints. Applies to all users. | true / false | true
+vaultwarden.showPasswordHint | Show password hints. [More Information](https://github.com/dani-garcia/vaultwarden/wiki/Password-hint-display) | true / false | false
+vaultwarden.enableWebsockets | Enable Websockets for notification. [More Information](https://github.com/dani-garcia/vaultwarden/wiki/Enabling-WebSocket-notifications). If using Ingress controllers, "notifications/hub" URL is redirected to websocket port | true / false | true
+vaultwarden.enableWebVault | Enable Web Vault static site. [More Information](https://github.com/dani-garcia/vaultwarden/wiki/Disabling-or-overriding-the-Vault-interface-hosting). | true / false | true
+vaultwarden.enableSends | Enable Bitwarden Sends globally. | true / false | true
+vaultwarden.orgCreationUsers | Restrict creation of orgs. | 'all', 'none' or a comma-separated list of users. | all
+vaultwarden.attachmentLimitOrg | Limit attachment disk usage in Kb per organization | Number | Not defined
+vaultwarden.attachmentLimitUser | Limit attachment disk usage in Kb per user | Number | Not defined
+vaultwarden.hibpApiKey | API Key to use HaveIBeenPwned service. Can be purchased at [here](https://haveibeenpwned.com/API/Key) | Text | Not defined
+vaultwarden.autoDeleteDays | Number of days to auto-delete trashed items. | Number | Empty (never auto-delete)
+vaultwarden.orgEvents | Enable Organization event logging | true / false | false
+vaultwarden.orgEventsRetention | Organization event log retention in days | Number | Empty (never delete)
+vaultwarden.extraEnv | Pass extra environment variables | Map | Not defined
+vaultwarden.log.file | Filename to log to disk. [More information](https://github.com/dani-garcia/vaultwarden/wiki/Logging) | File path | Empty
+vaultwarden.log.level | Change log level | trace, debug, info, warn, error or off | Empty
+vaultwarden.log.timeFormat | Log timestamp | Rust chrono [format](https://docs.rs/chrono/0.4.15/chrono/format/strftime/index.html). | Time in milliseconds | Empty
 
-$ helm install my-release doca/vaultwarden
-```
+## **Application Features**
 
-These commands deploy Vaultwarden on the Kubernetes cluster in the default configuration. The [Parameters](#parameters) section lists the parameters that can be configured during installation.
+:warning: SMTP SSL/TLS settings changed following Vaultwarden v1.25 release, see [Upgrade](#upgrade)
 
-> **Tip**: List all releases using `helm list`
+Option | Description | Format | Default
+------ | ----------- | ------ | -------
+vaultwarden.admin.enabled | Enable admin portal. Change settings in the portal will overwrite chart options. | true / false | false
+vaultwarden.admin.disableAdminToken | Disabling the admin token will make the admin portal accessible to anyone, use carefully. [More Information](https://github.com/dani-garcia/vaultwarden/wiki/Disable-admin-token) | true / false | false
+vaultwarden.admin.token | Token for admin login, will be generated if not defined. [More Information](https://github.com/dani-garcia/vaultwarden/wiki/Enabling-admin-page) | Text | Auto-generated
+vaultwarden.admin.existingSecret | Use existing secret for the admin token. Key is 'admin-token' | Secret name | Not defined
+|||
+vaultwarden.emergency.enabled | Allow any user to enable emergency access. | true / false | true
+vaultwarden.emergency.reminder | Schedule to send expiration reminders to emergency access grantors. | Cron schedule format, blank to disable | "0 3 \* \* \* \*" (hourly 3 minutes after the hour)
+vaultwarden.emergency.timeout | Schedule to grant emergency access requests that have met the required wait time. | Cron schedule format, blank to disable | "0 3 \* \* \* \*" (hourly 3 minutes after the hour)
+|||
+vaultwarden.smtp.enabled | Enable SMTP | true / false | false
+vaultwarden.smtp.host | SMTP hostname **required** | Hostname | Empty
+vaultwarden.smtp.from | SMTP sender e-mail address **required** | E-mail | Empty
+vaultwarden.smtp.fromName | SMTP sender name | Text | Vaultwarden
+vaultwarden.smtp.security | Set SMTP connection security [More Information](https://github.com/dani-garcia/vaultwarden/wiki/SMTP-Configuration) | starttls / force_tls / off | starttls
+vaultwarden.smtp.port | SMTP TCP port | Number | Security off: 25, starttls: 587, force_tls: 465
+vaultwarden.smtp.authMechanism | SMTP Authentication Mechanisms | Comma-separated list: 'Plain', 'Login', 'Xoauth2' | Plain
+vaultwarden.smtp.heloName | Hostname to be sent for SMTP HELO | Text | Pod name
+vaultwarden.smtp.timeout | SMTP connection timeout in seconds | Number | 15
+vaultwarden.smtp.invalidHostname | Accept valid certificates even if hostnames does not match. DANGEROUS! | true / false | false
+vaultwarden.smtp.invalidCertificate | Accept invalid certificates. DANGEROUS! | true / false | false
+vaultwarden.smtp.user | SMTP username | Text | Not defined
+vaultwarden.smtp.password | SMTP password. Required is user is specified | Text | Not defined
+vaultwarden.smtp.existingSecret | Use existing secret for SMTP authentication. Keys are 'smtp-user' and 'smtp-password' | Secret name | Not defined
+vaultwarden.smtp.embedImages | Embed images as email attachments | true / false | false
+|||
+vaultwarden.yubico.enabled | Enable Yubikey support | true / false | false
+vaultwarden.yubico.server | Yubico server | Hostname | YubiCloud
+vaultwarden.yubico.clientId | Yubico ID | Text | Not defined
+vaultwarden.yubico.secretKey | Yubico Secret Key | Text | Not defined
+vaultwarden.yubico.existingSecret | Use existing secret for ID and Secret. Keys are 'yubico-client-id' and 'yubico-secret-key' | Secret name | Not defined
+|||
+vaultwarden.icons.service | Service to fetch icons from | "internal", "bitwarden", "duckduckgo", "google" or custom URL | internal
+vaultwarden.icons.disableDownload | Disables download of external icons, icons in cache will still be served | true / false | false
+vaultwarden.icons.cache | Cache time-to-live for icons fetched. 0 means no purging | Number | 2592000. If download is disabled, defaults to 0
+vaultwarden.icons.cacheFailed | Cache time-to-live for icons that were not available. 0 means no purging | Number | 2592000
+vaultwarden.icons.redirectCode | HTTP code to use for redirects to an external icon service | true / false | 302
 
-## Uninstalling the Chart
+## **Network**
 
-To uninstall/delete the `my-release` release:
+Option | Description | Format | Default
+------ | ----------- | ------ | -------
+service.type | Service Type. [More Information](https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types) | Type | ClusterIP
+service.httpPort | Service port for HTTP server | Number | 80
+service.websocketPort | Service port for Websocket server, if enabled | Number | 3012
+service.externalTrafficPolicy | External Traffic Policy. [More Information](https://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/#preserving-the-client-source-ip) | Local / Cluster| Cluster
+service.loadBalancerIP | Manually select IP when type is LoadBalancer | IP address | Not defined
+service.nodePorts.http | Manually select node port for http | Number | Empty
+service.nodePorts.websocket | Manually select node port for websocker, if enabled | Number | Empty
+|||
+ingress.enabled | Enable Ingress | true / false | false
+ingress.className | Name of the ingress class | string | Empty
+ingress.host | Ingress hostname **required** | Hostname | Empty
+ingress.annotations | Ingress annotations | Map | Empty
+ingress.tls | Ingress TLS options | Array of Maps | Empty
+|||
+ingressRoute.enabled | Enable Traefik IngressRoute CRD | true / false | false
+ingressRoute.host | Ingress route hostname **required** | Hostname | Empty
+ingressRoute.middlewares | Enable middlewares | Map | Empty
+ingressRoute.entrypoints | List of Traefik endpoints | Array of Text | \[websecure\]
+ingressRoute.tls | Ingress route TLS options | Map | Empty
 
-```console
-$ helm delete my-release
-```
+## **Storage**
 
-The command removes all the Kubernetes components associated with the chart and deletes the release. Remove also the chart using `--purge` option:
+Option | Description | Format | Default
+------ | ----------- | ------ | -------
+persistence.enabled | Create persistent volume (PVC). Holds attachments, icon cache and, if used, the SQLite database | true / false | false
+persistence.size | Size of volume | Size | 1Gi
+persistence.accessMode | Volume access mode | Text | ReadWriteOnce
+persistence.storageClass | Storage Class | Text | Not defined. Use "-" for default class
+persistence.existingClaim | Use existing PVC | Name of PVC | Not defined
+customVolume | Use custom volume definition. Cannot be used with persistence | Map | Empty
 
-```console
-$ helm delete --purge my-release
-```
+## **Image**
 
+Option | Description | Format | Default
+------ | ----------- | ------ | -------
+image.tag | Docker image tag | Text | Chart appVersion (Chart.yaml)
+image.repository | Docker image | Text | vaultwarden/server
+imagePullSecrets | Image pull secrets | Array | Empty
 
-## Parameters
+## **General Kubernetes/Helm**
 
-### Global parameters
+Option | Description | Format | Default
+------ | ----------- | ------ | -------
+strategy | Deployment Strategy options | sub-tree | Empty
+replicaCount | Number of pod replicas | Number | 1
+nameOverride | Name override | Text | Empty
+fullnameOverride | Full name override | Text | Empty
+serviceAccount.create | Create Service Account | true / false | false
+serviceAccount.annotations | Annotations service account | Map | Empty
+serviceAccount.name | Service Account name | Text | Generated from template
+deploymentAnnotations | Deployment Annotations | Map | Empty
+sidecars | Sidecar container definition [Spec](https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#Container) | Array | Empty
+podAnnotations | Pod Annotations | Map | Empty
+podLabels | Extra Pod Labels | Map | Empty
+podSecurityContext | Pod-level Security Context | Map | {fsGroup:65534}
+securityContext | Container-level Security Context | Map | {runAsUser:65534, runAsGroup:65534}
+resources | Deployment Resources | Map | Empty
+nodeSelector | Node selector | Map | Empty
+tolerations | Tolerations | Array | Empty
+affinity | Affinity | Map | Empty
 
-| Name                      | Description                                     | Value |
-| ------------------------- | ----------------------------------------------- | ----- |
-| `global.imageRegistry`    | Global Docker image registry                    | `""`  |
-| `global.imagePullSecrets` | Global Docker registry secret names as an array | `[]`  |
-| `global.storageClass`     | Global StorageClass for Persistent Volume(s)    | `""`  |
+## Upgrade
 
+### From 0.x to 1.x
 
-### Common parameters
+Vaultwarden version before v1.25.0 had a [bug/mislabelled](https://github.com/dani-garcia/vaultwarden/issues/851) configuration setting regarding SSL and TLS. This has been fixed in testing and newer released versions. When image version is 1.25 or higher, use vaultwarden.smtp.security instead of vaultwarden.smtp.ssl/vaultwarden.smtp.explicitTLS.
 
-| Name                     | Description                                                                             | Value           |
-| ------------------------ | --------------------------------------------------------------------------------------- | --------------- |
-| `kubeVersion`            | Force target Kubernetes version (using Helm capabilities if not set)                    | `""`            |
-| `nameOverride`           | String to partially override common.names.fullname                                      | `""`            |
-| `fullnameOverride`       | String to fully override common.names.fullname                                          | `""`            |
-| `namespaceOverride`      | String to fully override common.names.namespace                                         | `""`            |
-| `commonLabels`           | Labels to add to all deployed objects                                                   | `{}`            |
-| `commonAnnotations`      | Annotations to add to all deployed objects                                              | `{}`            |
-| `clusterDomain`          | Default Kubernetes cluster domain                                                       | `cluster.local` |
-| `extraDeploy`            | Array of extra objects to deploy with the release                                       | `[]`            |
-| `diagnosticMode.enabled` | Enable diagnostic mode (all probes will be disabled and the command will be overridden) | `false`         |
-| `diagnosticMode.command` | Command to override all containers in the the statefulset                               | `["sleep"]`     |
-| `diagnosticMode.args`    | Args to override all containers in the the statefulset                                  | `["infinity"]`  |
-
-
-### Vaultwarden parameters
-
-| Name                | Description                                                                                                 | Value                |
-| ------------------- | ----------------------------------------------------------------------------------------------------------- | -------------------- |
-| `image.registry`    | Vaultwarden image registry                                                                                  | `docker.io`          |
-| `image.repository`  | Vaultwarden image repository                                                                                | `vaultwarden/server` |
-| `image.tag`         | Vaultwarden image tag (immutable tags are recommended)                                                      | `1.26.0-alpine`      |
-| `image.digest`      | Vaultwarden image digest in the way sha256:aa.... Please note this parameter, if set, will override the tag | `""`                 |
-| `image.pullPolicy`  | Vaultwarden image pull policy                                                                               | `IfNotPresent`       |
-| `image.pullSecrets` | Specify docker-registry secret names as an array                                                            | `[]`                 |
-| `image.debug`       | Enable %%MAIN_CONTAINER%% image debug mode                                                                  | `false`              |
-| `websocket.enabled` | Enable websocket notifications                                                                              | `true`               |
-| `rocket.workers`    | Rocket number of workers                                                                                    | `10`                 |
-| `webVaultEnabled`   | Enable Web Vault                                                                                            | `true`               |
-
-
-### Security settings
-
-| Name                 | Description                                                                     | Value         |
-| -------------------- | ------------------------------------------------------------------------------- | ------------- |
-| `adminToken`         | The admin token used for /admin                                                 | `""`          |
-| `signupsAllowed`     | By default, anyone who can access your instance can register for a new account. | `true`        |
-| `invitationsAllowed` | Even when registration is disabled, organization administrators or owners can   | `true`        |
-| `signupDomains`      | List of domain names for users allowed to register                              | `example.com` |
-| `signupsVerify`      | Whether to require account verification for newly-registered users.             | `true`        |
-| `showPassHint`       | Whether a password hint should be shown in the page.                            | `false`       |
-| `command`            | Override default container command (useful when using custom images)            | `[]`          |
-| `args`               | Override default container args (useful when using custom images)               | `[]`          |
-| `extraEnvVars`       | Extra environment variables to be set on vaultwarden container                  | `[]`          |
-| `extraEnvVarsCM`     | Name of existing ConfigMap containing extra env vars                            | `""`          |
-| `extraEnvVarsSecret` | Name of existing Secret containing extra env vars                               | `""`          |
-
-
-### vaultwarden statefulset parameters
-
-| Name                                    | Description                                                                                                              | Value               |
-| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | ------------------- |
-| `replicaCount`                          | Number of vaultwarden replicas to deploy                                                                                 | `1`                 |
-| `containerPorts.http`                   | vaultwarden HTTP container port                                                                                          | `8080`              |
-| `containerPorts.websocket`              | vaultwarden websocket container port                                                                                     | `3012`              |
-| `extraContainerPorts`                   | Optionally specify extra list of additional port-mappings for vaultwarden container                                      | `[]`                |
-| `podSecurityContext.enabled`            | Enabled vaultwarden pods' Security Context                                                                               | `true`              |
-| `podSecurityContext.fsGroup`            | Set vaultwarden pod's Security Context fsGroup                                                                           | `1000`              |
-| `containerSecurityContext.enabled`      | Enabled vaultwarden containers' Security Context                                                                         | `true`              |
-| `containerSecurityContext.runAsUser`    | Set vaultwarden container's Security Context runAsUser                                                                   | `1000`              |
-| `containerSecurityContext.runAsNonRoot` | Set vaultwarden container's Security Context runAsNonRoot                                                                | `true`              |
-| `resources.limits`                      | The resources limits for the vaultwarden containers                                                                      | `{}`                |
-| `resources.requests`                    | The requested resources for the vaultwarden containers                                                                   | `{}`                |
-| `livenessProbe.enabled`                 | Enable livenessProbe on vaultwarden containers                                                                           | `false`             |
-| `livenessProbe.initialDelaySeconds`     | Initial delay seconds for livenessProbe                                                                                  | `300`               |
-| `livenessProbe.periodSeconds`           | Period seconds for livenessProbe                                                                                         | `1`                 |
-| `livenessProbe.timeoutSeconds`          | Timeout seconds for livenessProbe                                                                                        | `5`                 |
-| `livenessProbe.failureThreshold`        | Failure threshold for livenessProbe                                                                                      | `3`                 |
-| `livenessProbe.successThreshold`        | Success threshold for livenessProbe                                                                                      | `1`                 |
-| `readinessProbe.enabled`                | Enable readinessProbe on vaultwarden containers                                                                          | `false`             |
-| `readinessProbe.initialDelaySeconds`    | Initial delay seconds for readinessProbe                                                                                 | `30`                |
-| `readinessProbe.periodSeconds`          | Period seconds for readinessProbe                                                                                        | `10`                |
-| `readinessProbe.timeoutSeconds`         | Timeout seconds for readinessProbe                                                                                       | `1`                 |
-| `readinessProbe.failureThreshold`       | Failure threshold for readinessProbe                                                                                     | `3`                 |
-| `readinessProbe.successThreshold`       | Success threshold for readinessProbe                                                                                     | `1`                 |
-| `startupProbe.enabled`                  | Enable startupProbe on vaultwarden containers                                                                            | `false`             |
-| `startupProbe.initialDelaySeconds`      | Initial delay seconds for startupProbe                                                                                   | `30`                |
-| `startupProbe.periodSeconds`            | Period seconds for startupProbe                                                                                          | `5`                 |
-| `startupProbe.timeoutSeconds`           | Timeout seconds for startupProbe                                                                                         | `1`                 |
-| `startupProbe.failureThreshold`         | Failure threshold for startupProbe                                                                                       | `60`                |
-| `startupProbe.successThreshold`         | Success threshold for startupProbe                                                                                       | `1`                 |
-| `customLivenessProbe`                   | Custom Liveness probes for vaultwarden                                                                                   | `{}`                |
-| `customReadinessProbe`                  | Custom Rediness probes vaultwarden                                                                                       | `{}`                |
-| `customStartupProbe`                    | Custom Startup probes for vaultwarden                                                                                    | `{}`                |
-| `lifecycleHooks`                        | LifecycleHooks to set additional configuration at startup                                                                | `{}`                |
-| `hostAliases`                           | Deployment pod host aliases                                                                                              | `[]`                |
-| `podLabels`                             | Extra labels for vaultwarden pods                                                                                        | `{}`                |
-| `podAnnotations`                        | Annotations for vaultwarden pods                                                                                         | `{}`                |
-| `podAffinityPreset`                     | Pod affinity preset. Ignored if `affinity` is set. Allowed values: `soft` or `hard`                                      | `""`                |
-| `podAntiAffinityPreset`                 | Pod anti-affinity preset. Ignored if `affinity` is set. Allowed values: `soft` or `hard`                                 | `soft`              |
-| `nodeAffinityPreset.type`               | Node affinity preset type. Ignored if `affinity` is set. Allowed values: `soft` or `hard`                                | `""`                |
-| `nodeAffinityPreset.key`                | Node label key to match. Ignored if `affinity` is set.                                                                   | `""`                |
-| `nodeAffinityPreset.values`             | Node label values to match. Ignored if `affinity` is set.                                                                | `[]`                |
-| `affinity`                              | Affinity for pod assignment                                                                                              | `{}`                |
-| `nodeSelector`                          | Node labels for pod assignment                                                                                           | `{}`                |
-| `tolerations`                           | Tolerations for pod assignment                                                                                           | `[]`                |
-| `topologySpreadConstraints`             | Topology Spread Constraints for pod assignment spread across your cluster among failure-domains. Evaluated as a template | `[]`                |
-| `podManagementPolicy`                   | Pod management policy for the vaultwarden statefulset                                                                    | `Parallel`          |
-| `priorityClassName`                     | vaultwarden pods' Priority Class Name                                                                                    | `""`                |
-| `schedulerName`                         | Use an alternate scheduler, e.g. "stork".                                                                                | `""`                |
-| `terminationGracePeriodSeconds`         | Seconds vaultwarden pod needs to terminate gracefully                                                                    | `""`                |
-| `updateStrategy.type`                   | vaultwarden statefulset strategy type                                                                                    | `RollingUpdate`     |
-| `updateStrategy.rollingUpdate`          | vaultwarden statefulset rolling update configuration parameters                                                          | `{}`                |
-| `extraVolumes`                          | Optionally specify extra list of additional volumes for vaultwarden pods                                                 | `[]`                |
-| `extraVolumeMounts`                     | Optionally specify extra list of additional volumeMounts for vaultwarden container(s)                                    | `[]`                |
-| `initContainers`                        | Add additional init containers to the vaultwarden pods                                                                   | `[]`                |
-| `sidecars`                              | Add additional sidecar containers to the vaultwarden pods                                                                | `[]`                |
-| `persistence.enabled`                   | Enable persistence                                                                                                       | `true`              |
-| `persistence.storageClass`              | data Persistent Volume Storage Class                                                                                     | `""`                |
-| `persistence.existingClaim`             | Provide an existing `PersistentVolumeClaim`                                                                              | `""`                |
-| `persistence.accessModes`               | Persistent Volume access modes                                                                                           | `["ReadWriteOnce"]` |
-| `persistence.size`                      | Size for the PV                                                                                                          | `10Gi`              |
-| `persistence.annotations`               | Persistent Volume Claim annotations                                                                                      | `{}`                |
-| `persistence.subPath`                   | The subdirectory of the volume to mount to, useful in dev environments and one PV for multiple services                  | `""`                |
-| `persistence.selector`                  | Selector to match an existing Persistent Volume for WordPress data PVC                                                   | `{}`                |
-| `persistence.dataSource`                | Custom PVC data source                                                                                                   | `{}`                |
-
-
-### Exposure parameters
-
-| Name                               | Description                                                                                                                      | Value                    |
-| ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | ------------------------ |
-| `service.type`                     | Kubernetes service type                                                                                                          | `ClusterIP`              |
-| `service.ports.http`               | vaultwarden service HTTP port                                                                                                    | `8080`                   |
-| `service.ports.websocket`          | vaultwarden service websocket port                                                                                               | `3012`                   |
-| `service.nodePorts`                | Specify the nodePort values for the LoadBalancer and NodePort service types.                                                     | `{}`                     |
-| `service.sessionAffinity`          | Control where client requests go, to the same pod or round-robin                                                                 | `None`                   |
-| `service.sessionAffinityConfig`    | Additional settings for the sessionAffinity                                                                                      | `{}`                     |
-| `service.clusterIP`                | vaultwarden service clusterIP IP                                                                                                 | `""`                     |
-| `service.loadBalancerIP`           | loadBalancerIP for the SuiteCRM Service (optional, cloud specific)                                                               | `""`                     |
-| `service.loadBalancerSourceRanges` | Address that are allowed when service is LoadBalancer                                                                            | `[]`                     |
-| `service.externalTrafficPolicy`    | Enable client source IP preservation                                                                                             | `Cluster`                |
-| `service.annotations`              | Additional custom annotations for vaultwarden service                                                                            | `{}`                     |
-| `service.extraPorts`               | Extra port to expose on vaultwarden service                                                                                      | `[]`                     |
-| `service.extraHeadlessPorts`       | Extra ports to expose on vaultwarden headless service                                                                            | `[]`                     |
-| `ingress.enabled`                  | Enable ingress record generation for vaultwarden                                                                                 | `false`                  |
-| `ingress.ingressClassName`         | IngressClass that will be be used to implement the Ingress (Kubernetes 1.18+)                                                    | `""`                     |
-| `ingress.pathType`                 | Ingress path type                                                                                                                | `ImplementationSpecific` |
-| `ingress.apiVersion`               | Force Ingress API version (automatically detected if not set)                                                                    | `""`                     |
-| `ingress.hostname`                 | Default host for the ingress record (evaluated as template)                                                                      | `vaultwarden.local`      |
-| `ingress.path`                     | Default path for the ingress record                                                                                              | `/`                      |
-| `ingress.pathWs`                   | Path for the websocket ingress                                                                                                   | `/notifications/hub`     |
-| `ingress.servicePort`              | Backend service port to use                                                                                                      | `http`                   |
-| `ingress.annotations`              | Additional annotations for the Ingress resource. To enable certificate autogeneration, place here your cert-manager annotations. | `{}`                     |
-| `ingress.tls`                      | Enable TLS configuration for the host defined at `ingress.hostname` parameter                                                    | `false`                  |
-| `ingress.selfSigned`               | Create a TLS secret for this ingress record using self-signed certificates generated by Helm                                     | `false`                  |
-| `ingress.extraHosts`               | An array with additional hostname(s) to be covered with the ingress record                                                       | `[]`                     |
-| `ingress.extraPaths`               | Any additional arbitrary paths that may need to be added to the ingress under the main host.                                     | `[]`                     |
-| `ingress.extraTls`                 | The tls configuration for additional hostnames to be covered with this ingress record.                                           | `[]`                     |
-| `ingress.secrets`                  | If you're providing your own certificates, please use this to add the certificates as secrets                                    | `[]`                     |
-| `ingress.extraRules`               | Additional rules to be covered with this ingress record                                                                          | `[]`                     |
-| `ingress.nginxAllowList`           | Comma-separated list of IP addresses and subnets to allow.                                                                       | `""`                     |
-
-
-### RBAC parameter
-
-| Name                                          | Description                                                  | Value   |
-| --------------------------------------------- | ------------------------------------------------------------ | ------- |
-| `serviceAccount.create`                       | Enable the creation of a ServiceAccount for vaultwarden pods | `true`  |
-| `serviceAccount.name`                         | Name of the created ServiceAccount                           | `""`    |
-| `serviceAccount.automountServiceAccountToken` | Auto-mount the service account token in the pod              | `false` |
-| `serviceAccount.annotations`                  | Additional custom annotations for the ServiceAccount         | `{}`    |
-
-
-### Database Configuration
-
-| Name            | Description                                 | Value        |
-| --------------- | ------------------------------------------- | ------------ |
-| `database.type` | Database type, either default or postgresql | `postgresql` |
-
-
-### Database parameters
-
-| Name                                         | Description                                                             | Value                 |
-| -------------------------------------------- | ----------------------------------------------------------------------- | --------------------- |
-| `postgresql.enabled`                         | Switch to enable or disable the PostgreSQL helm chart                   | `true`                |
-| `postgresql.auth.username`                   | Name for a custom user to create                                        | `bn_vaultwarden`      |
-| `postgresql.auth.password`                   | Password for the custom user to create                                  | `""`                  |
-| `postgresql.auth.database`                   | Name for a custom database to create                                    | `bitnami_vaultwarden` |
-| `postgresql.auth.existingSecret`             | Name of existing secret to use for PostgreSQL credentials               | `""`                  |
-| `postgresql.architecture`                    | PostgreSQL architecture (`standalone` or `replication`)                 | `standalone`          |
-| `externalDatabase.host`                      | Database host                                                           | `""`                  |
-| `externalDatabase.port`                      | Database port number                                                    | `5432`                |
-| `externalDatabase.user`                      | Non-root username for vaultwarden                                       | `bn_vaultwarden`      |
-| `externalDatabase.password`                  | Password for the non-root username for vaultwarden                      | `""`                  |
-| `externalDatabase.database`                  | vaultwarden database name                                               | `bitnami_vaultwarden` |
-| `externalDatabase.existingSecret`            | Name of an existing secret resource containing the database credentials | `""`                  |
-| `externalDatabase.existingSecretPasswordKey` | Name of an existing secret key containing the database credentials      | `""`                  |
-
-
-### SMTP Configuration
-
-| Name                          | Description                           | Value      |
-| ----------------------------- | ------------------------------------- | ---------- |
-| `smtp.host`                   | SMTP host                             | `""`       |
-| `smtp.security`               | SMTP Encryption method                | `starttls` |
-| `smtp.port`                   | SMTP port                             | `587`      |
-| `smtp.from`                   | SMTP sender email address             | `""`       |
-| `smtp.username`               | Username for the SMTP authentication. | `""`       |
-| `smtp.password`               | Password for the SMTP service.        | `""`       |
-| `smtp.authMechanism`          | SMTP authentication mechanism         | `Login`    |
-| `smtp.acceptInvalidHostnames` | Accept Invalid Hostnames              | `false`    |
-| `smtp.acceptInvalidCerts`     | Accept Invalid Certificates           | `false`    |
-| `smtp.debug`                  | SMTP debugging                        | `false`    |
-
-## License
-
-[MIT](./LICENSE).
-
-## Author
-
-This Helm chart was created and is being maintained by @captnbp.
-
-### Credits
-
-- The `vaultwarden` project can be found [here](https://github.com/dani-garcia/vaultwarden)
-- Further information about `Bitwarden` and 8bit Solutions LLC can be found [here](https://bitwarden.com/)
+ssl | explicitTLS | security equivalent
+--- | ----------- | -------------------
+false | false | off
+false | true | off
+true | false | starttls
+true | true | force_tls

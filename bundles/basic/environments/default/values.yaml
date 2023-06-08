@@ -16,3 +16,24 @@ cert-issuers:
 
 prometheus: 
   retentionSize: 1Gi
+
+grafana-operator:
+  envFrom:
+    - secretRef:
+        name: grafana
+
+postgres:
+  enabled: false
+
+vaultwarden:
+  enabled: false
+  database:
+    existingSecret: postgres-vaultwarden
+    existingSecretKeyName: connectionString 
+  Vaultwarden:
+    smtp:
+      enabled: true
+      host: "smtp.ertia.cloud"
+      from: "noreply@ertia.com"
+Gitea:
+  enabled: false

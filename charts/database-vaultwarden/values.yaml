@@ -1,0 +1,15 @@
+  postgres:
+    secretName: postgres
+    secretKey: username
+    passwordSecretKey: password
+    
+
+  vaultwarden:
+    secretName: vaultwarden-postgres
+    userSecretKey: username
+    passwordSecretKey: password
+    connectionStringSecretKey: connectionString
+
+
+
+

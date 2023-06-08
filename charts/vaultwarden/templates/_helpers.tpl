@@ -1,134 +1,105 @@
 {{/* vim: set filetype=mustache: */}}
+{{/*
+Expand the name of the chart.
+*/}}
+{{- define "vaultwarden.name" -}}
+{{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
+{{- end }}
 
 {{/*
-Return the proper vaultwarden image name
+Create a default fully qualified app name.
+We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
+If release name contains chart name it will be used as a full name.
 */}}
-{{- define "vaultwarden.image" -}}
-{{ include "common.images.image" (dict "imageRoot" .Values.image "global" .Values.global) }}
-{{- end -}}
+{{- define "vaultwarden.fullname" -}}
+{{- if .Values.fullnameOverride }}
+{{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}
+{{- else }}
+{{- $name := default .Chart.Name .Values.nameOverride }}
+{{- if contains $name .Release.Name }}
+{{- .Release.Name | trunc 63 | trimSuffix "-" }}
+{{- else }}
+{{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" }}
+{{- end }}
+{{- end }}
+{{- end }}
 
 {{/*
-Return the proper Docker Image Registry Secret Names
+Create chart name and version as used by the chart label.
 */}}
-{{- define "vaultwarden.imagePullSecrets" -}}
-{{- include "common.images.pullSecrets" (dict "images" (list .Values.image) "global" .Values.global) -}}
-{{- end -}}
+{{- define "vaultwarden.chart" -}}
+{{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
+{{/*
+Common labels
+*/}}
+{{- define "vaultwarden.labels" -}}
+helm.sh/chart: {{ include "vaultwarden.chart" . }}
+{{ include "vaultwarden.selectorLabels" . }}
+{{- if .Chart.AppVersion }}
+app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+{{- end }}
+app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- end }}
+
+{{/*
+Selector labels
+*/}}
+{{- define "vaultwarden.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "vaultwarden.name" . }}
+app.kubernetes.io/instance: {{ .Release.Name }}
+{{- end }}
 
 {{/*
 Create the name of the service account to use
 */}}
 {{- define "vaultwarden.serviceAccountName" -}}
-{{- if .Values.serviceAccount.create -}}
-    {{ default (include "common.names.fullname" .) .Values.serviceAccount.name }}
-{{- else -}}
-    {{ default "default" .Values.serviceAccount.name }}
+{{- if .Values.serviceAccount.create }}
+{{- default (include "vaultwarden.fullname" .) .Values.serviceAccount.name }}
+{{- else }}
+{{- default "default" .Values.serviceAccount.name }}
+{{- end }}
+{{- end }}
+
+{{/*
+Ensure valid DB type is select, defaults to SQLite
+*/}}
+{{- define "vaultwarden.dbTypeValid" -}}
+{{- if not (or (eq .Values.database.type "postgresql") (eq .Values.database.type "mysql") (eq .Values.database.type "sqlite")) }}
+{{- required "Invalid database type" nil }}
 {{- end -}}
 {{- end -}}
 
 {{/*
-Create a default fully qualified app name.
-We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
+Ensure log type is valid
 */}}
-{{- define "vaultwarden.postgresql.fullname" -}}
-{{- include "common.names.dependency.fullname" (dict "chartName" "postgresql" "chartValues" .Values.postgresql "context" $) -}}
-{{- end -}}
+{{- define "vaultwarden.logLevelValid" -}}
+{{- if not (or (eq .Values.vaultwarden.log.level "trace") (eq .Values.vaultwarden.log.level "debug") (eq .Values.vaultwarden.log.level "info") (eq .Values.vaultwarden.log.level "warn") (eq .Values.vaultwarden.log.level "error") (eq .Values.vaultwarden.log.level "off")) }}
+{{- required "Invalid log level" nil }}
+{{- end }}
+{{- end }}
 
 {{/*
-Return the Database hostname
+Ensure SMTP Security setting is valid
 */}}
-{{- define "vaultwarden.databaseHost" -}}
-{{- if eq .Values.postgresql.architecture "replication" }}
-{{- ternary (include "vaultwarden.postgresql.fullname" .) .Values.externalDatabase.host .Values.postgresql.enabled -}}-primary
-{{- else -}}
-{{- ternary (include "vaultwarden.postgresql.fullname" .) .Values.externalDatabase.host .Values.postgresql.enabled -}}
-{{- end -}}
-{{- end -}}
 
-{{/*
-Return the Database port
-*/}}
-{{- define "vaultwarden.databasePort" -}}
-{{- ternary "5432" .Values.externalDatabase.port .Values.postgresql.enabled -}}
-{{- end -}}
+{{- define "vaultwarden.smtpSecurityValid" -}}
+{{- if or (hasKey .Values.vaultwarden.smtp "ssl") (hasKey .Values.vaultwarden.smtp "explicitTLS") }}
+{{- required "SMTP options ssl and explicitTLS are deprecated for Vaulwarden 1.25 or newer, see documentation" nil }}
+{{- end }}
+{{- if not (or (eq .Values.vaultwarden.smtp.security "off") (eq .Values.vaultwarden.smtp.security "starttls") (eq .Values.vaultwarden.smtp.security "force_tls") ) }}
+{{- required "Invalid SMTP security setting, valid options are: off, starttls and force_tls" nil }}
+{{- end }}
+{{- end }}
 
-{{/*
-Return the Database database name
-*/}}
-{{- define "vaultwarden.databaseName" -}}
-{{- if .Values.postgresql.enabled }}
-    {{- if .Values.global.postgresql }}
-        {{- if .Values.global.postgresql.auth }}
-            {{- coalesce .Values.global.postgresql.auth.database .Values.postgresql.auth.database -}}
-        {{- else -}}
-            {{- .Values.postgresql.auth.database -}}
-        {{- end -}}
-    {{- else if .Values.postgresql.auth.database -}}
-        {{- .Values.postgresql.auth.database -}}
-    {{- else -}}
-        {{- printf "bitnami_%s"  (include "common.names.fullname" .) -}}
-    {{- end -}}
-{{- else -}}
-    {{- .Values.externalDatabase.database -}}
-{{- end -}}
-{{- end -}}
 
-{{/*
-Return the Database user
-*/}}
-{{- define "vaultwarden.databaseUser" -}}
-{{- if .Values.postgresql.enabled -}}
-    {{- if .Values.global.postgresql -}}
-        {{- if .Values.global.postgresql.auth -}}
-            {{- coalesce .Values.global.postgresql.auth.username .Values.postgresql.auth.username -}}
-        {{- else -}}
-            {{- .Values.postgresql.auth.username -}}
-        {{- end -}}
-    {{- else -}}
-        {{- .Values.postgresql.auth.username -}}
-    {{- end -}}
-{{- else -}}
-    {{- .Values.externalDatabase.user -}}
-{{- end -}}
-{{- end -}}
-
-{{/*
-Return the Database encrypted password
-*/}}
-{{- define "vaultwarden.databaseSecretName" -}}
-{{- if .Values.postgresql.enabled -}}
-    {{- if .Values.global.postgresql -}}
-        {{- if .Values.global.postgresql.auth -}}
-            {{- if .Values.global.postgresql.auth.existingSecret -}}
-                {{- tpl .Values.global.postgresql.auth.existingSecret $ -}}
-            {{- else -}}
-                {{- default (include "vaultwarden.postgresql.fullname" .) (tpl .Values.postgresql.auth.existingSecret $) -}}
-            {{- end -}}
-        {{- else -}}
-            {{- default (include "vaultwarden.postgresql.fullname" .) (tpl .Values.postgresql.auth.existingSecret $) -}}
-        {{- end -}}
-    {{- else -}}
-        {{- default (include "vaultwarden.postgresql.fullname" .) (tpl .Values.postgresql.auth.existingSecret $) -}}
-    {{- end -}}
-{{- else -}}
-    {{- default (printf "%s-externaldb" .Release.Name) (tpl .Values.externalDatabase.existingSecret $) -}}
-{{- end -}}
-{{- end -}}
-
-{{/*
-Add environment variables to configure database values
-*/}}
-{{- define "vaultwarden.databaseSecretKey" -}}
-{{- if .Values.postgresql.enabled -}}
-    {{- print "password" -}}
-{{- else -}}
-    {{- if .Values.externalDatabase.existingSecret -}}
-        {{- if .Values.externalDatabase.existingSecretPasswordKey -}}
-            {{- printf "%s" .Values.externalDatabase.existingSecretPasswordKey -}}
-        {{- else -}}
-            {{- print "db-password" -}}
-        {{- end -}}
-    {{- else -}}
-        {{- print "db-password" -}}
-    {{- end -}}
-{{- end -}}
+{{- define "vaultwarden.domainSubPath" -}}
+{{- if .Values.vaultwarden.domain }}
+{{- if not (regexMatch "https?:\\/\\/.*?(\\/|$)" .Values.vaultwarden.domain) }}
+{{- required "Invalid domain, must start with http or https" nil }}
+{{- end }}
+{{- $subpath := regexReplaceAll "https?:\\/\\/.*?(\\/|$)" .Values.vaultwarden.domain "" -}}/{{ $subpath }}
+{{- else }}/
+{{- end }}
 {{- end -}}

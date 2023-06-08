@@ -1,0 +1,15 @@
+  postgres:
+    secretName: postgres
+    secretKey: username
+    passwordSecretKey: password
+    
+
+  giteadatabase:
+    secretName: giteadatabase
+    userSecretKey: username
+    passwordSecretKey: password
+    connectionStringSecretKey: connectionString
+
+
+
+
