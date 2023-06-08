@@ -2,7 +2,7 @@ cilium:
   enabled: false
 
 cert-manager:
-  enabled: false
+  enabled: true
 
 
 monitoring:
@@ -10,9 +10,9 @@ monitoring:
 
 cert-issuers:
   letsencrypt: 
-    enabled: false
+    enabled: true
   zerossl: 
-    enabled: false
+    enabled: true
 
 prometheus: 
   retentionSize: 1Gi
@@ -23,7 +23,7 @@ grafana-operator:
         name: grafana
 
 postgres:
-  enabled: false
+  enabled: true
 
 vaultwarden:
   enabled: false
@@ -35,5 +35,6 @@ vaultwarden:
       enabled: true
       host: "smtp.ertia.cloud"
       from: "noreply@ertia.com"
+      
 Gitea:
   enabled: false
