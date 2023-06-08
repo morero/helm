@@ -67,7 +67,7 @@ releases:
   values:
     - *env # reference the anchor
 
-- name: postgres-cluster
+- name: database-cluster
   condition: postgres.enabled
   namespace: postgres
   chart: basic-bundle/database-cluster

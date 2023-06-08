@@ -8,6 +8,9 @@ cert-manager:
 monitoring:
   enabled: true
 
+gitea:
+  enabled: false
+
 cert-issuers:
   letsencrypt: 
     enabled: true
@@ -35,6 +38,4 @@ vaultwarden:
       enabled: true
       host: "smtp.ertia.cloud"
       from: "noreply@ertia.com"
-      
-Gitea:
-  enabled: false
+
