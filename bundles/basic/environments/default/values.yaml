@@ -3,6 +3,7 @@ cilium:
 
 cert-manager:
   enabled: true
+  installCRDs: true
 
 postgres:
   enabled: true

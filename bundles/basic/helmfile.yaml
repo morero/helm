@@ -48,6 +48,7 @@ releases:
   values:
     - *env # reference the anchor
 - name: prometheus
+  disableValidation: true
   condition: monitoring.enabled
   namespace: monitoring
   chart: basic-bundle/kube-prometheus
@@ -56,6 +57,7 @@ releases:
   wait: true
 - name: grafana-operator
   condition: monitoring.enabled
+  disableValidation: true
   namespace: monitoring
   chart: basic-bundle/grafana-operator
   disableOpenAPIValidation: true
@@ -64,17 +66,17 @@ releases:
 - name: loki
   condition: monitoring.enabled
   namespace: monitoring
+  disableValidation: true
   chart: basic-bundle/grafana-loki
   values:
     - *env # reference the anchor
 - name: cert-manager
   condition: cert-manager.enabled
+  disableValidation: true
   namespace: cert-manager
   chart: basic-bundle/cert-manager
   values:
     - *env # reference the anchor
-  wait: true
-  waitForJobs: true
   
 - name: cert-issuers
   condition: cert-manager.enabled
