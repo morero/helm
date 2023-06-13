@@ -17,13 +17,13 @@ spec:
             - name: PGUSER # This env variable is used per default, by PSQL
               valueFrom: 
                 secretKeyRef:
-                  name: {{ .Values.superusersecret.secretName }}
-                  key: {{.Values.superusersecret.secretKey }}
+                  name: superuser-secret
+                  key: username
             - name: PGPASSWORD # This env variable is used per default, by PSQL
               valueFrom:
                 secretKeyRef: 
-                  name: {{ .Values.superusersecret.secretName }} # postgres
-                  key: {{ .Values.superusersecret.passwordSecretKey }} # password
+                  name: superuser-secret # postgres
+                  key: password # password
             - name: APPLICATIONUSER
               valueFrom:
                 secretKeyRef: 
@@ -57,13 +57,13 @@ spec:
             - name: PGUSER
               valueFrom:
                 secretKeyRef: 
-                  name: {{ .Values.superusersecret.secretName }}
-                  key: {{ .Values.superusersecret.secretKey }}
+                  name: superuser-secret
+                  key: username
             - name: PGPASSWORD
               valueFrom:
                 secretKeyRef: 
-                  name: {{ .Values.superusersecret.secretName }} # postgres
-                  key: {{ .Values.superusersecret.passwordSecretKey }}
+                  name: superuser-secret # postgres
+                  key: password
             - name: GITEAUSER
               valueFrom:
                 secretKeyRef: 
@@ -98,13 +98,13 @@ spec:
             - name: PGUSER
               valueFrom:
                 secretKeyRef: 
-                  name: {{ .Values.superusersecret.secretName }}
-                  key: {{ .Values.superusersecret.secretKey }}
+                  name: superuser-secret
+                  key: username
             - name: PGPASSWORD
               valueFrom:
                 secretKeyRef: 
-                  name: {{ .Values.superusersecret.secretName }} # postgres
-                  key: {{ .Values.superusersecret.passwordSecretKey }}
+                  name: superuser-secret # postgres
+                  key: password
             - name: GITEAUSER
               valueFrom:
                 secretKeyRef: 
