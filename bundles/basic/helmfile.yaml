@@ -70,7 +70,7 @@ releases:
 - name: cert-manager
   condition: cert-manager.enabled
   namespace: cert-manager
-  chart: jetstack/cert-manager
+  chart: basic-bundle/cert-manager
   values:
     - *env # reference the anchor
   wait: true
@@ -93,8 +93,6 @@ releases:
     - *env # reference the anchor
   needs: 
     - database-cluster
-
-  
 
 - name: vaultwarden
   condition: vaultwarden.enabled
