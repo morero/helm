@@ -2,10 +2,10 @@ cilium:
   enabled: false
 
 cert-manager:
-  enabled: false
+  enabled: true
 
 postgres:
-  enabled: false
+  enabled: true
 
 database-cluster:
   superuser-secret:
@@ -38,7 +38,7 @@ Database-gitea:
     connectionStringSecretKey: connectionString
 
 gitea:
-  enabled: false
+  enabled: true
   config: 
     database:
       DB_TYPE: postgres
@@ -62,9 +62,9 @@ gitea:
 
 cert-issuers:
   letsencrypt: 
-    enabled: false
+    enabled: true
   zerossl: 
-    enabled: false
+    enabled: true
 
 prometheus: 
   retentionSize: 1Gi
@@ -81,7 +81,7 @@ grafana-operator:
 
 
 vaultwarden:
-  enabled: false
+  enabled: true
   database:
     existingSecret: postgres-vaultwarden
     existingSecretKeyName: connectionString 
