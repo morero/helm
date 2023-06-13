@@ -820,3 +820,11 @@ grafana:
   ##         containerPort: 1234
   ##
   sidecars: []
+
+prometheusdatasource: http://prometheus-prometheus-kube-prometheus-prometheus.monitoring.svc.cluster.local:9090
+lokidatasource: http://loki-grafana-loki-gateway.monitoring.svc.cluster.local:80
+  
+admin:
+  user: YWRtaW4=
+  password: cGFzc3dvcmQ=
+

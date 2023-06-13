@@ -22,6 +22,26 @@ releases:
   condition: cilium.enabled
   values:
     - &env env-magic.gotmpl # use a YAML anchor for DRYness
+
+- name: postgres-operator
+  condition: postgres.enabled
+  namespace: postgres
+  chart: basic-bundle/cloudnative-pg
+  values:
+    - *env # reference the anchor
+  wait: true
+  waitForJobs: true
+
+- name: database-cluster
+  condition: postgres.enabled
+  namespace: postgres
+  chart: basic-bundle/database-cluster
+  values:
+    - *env # reference the anchor
+  needs: 
+    - postgres-operator
+  waitForJobs: true
+
 - name: replicator
   namespace: kube-system
   chart: mittwald/kubernetes-replicator
@@ -60,27 +80,16 @@ releases:
   values:
     - *env # reference the anchor
 
-- name: postgres-operator
-  condition: postgres.enabled
-  namespace: postgres
-  chart: basic-bundle/cloudnative-pg
-  values:
-    - *env # reference the anchor
-
-- name: database-cluster
-  condition: postgres.enabled
-  namespace: postgres
-  chart: basic-bundle/database-cluster
-  values:
-    - *env # reference the anchor
-
-
 - name: vaultwarden-database
   condition: vaultwarden.enabled
   namespace: postgres
   chart: basic-bundle/database-vaultwarden
   values:
     - *env # reference the anchor
+  needs: 
+    - database-cluster
+
+  
 
 - name: vaultwarden
   condition: vaultwarden.enabled
@@ -88,20 +97,26 @@ releases:
   chart: basic-bundle/vaultwarden
   values:
     - *env # reference the anchor
+  needs: 
+    - vaultwarden-database
 
 - name: gitea-database
   condition: gitea.enabled
   namespace: postgres
   chart: basic-bundle/database-gitea
   values:
-    - *env # reference the anchor    
+    - *env # reference the anchor
+  needs: 
+    - database-cluster    
 
 - name: gitea
   condition: gitea.enabled
   namespace: gitea
   chart: basic-bundle/gitea
   values:
-    - *env # reference the anchor    
+    - *env # reference the anchor  
+  needs: 
+    - gitea-database 
 
 
 

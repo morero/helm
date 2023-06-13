@@ -2,20 +2,69 @@ cilium:
   enabled: false
 
 cert-manager:
-  enabled: true
+  enabled: false
+
+postgres:
+  enabled: false
+
+database-cluster:
+  superuser-secret:
+    secretName: superuser-secret
+    secretKey: username
+    passwordSecretKey: password
+
+  app-secret:
+    secretName: app-secret
+    secretKey: username
+    passwordSecretKey: password
+
+  contabocredentials:
+    secretName: contabocredentials
+    secretKey: username
+    passwordSecretKey: password 
+
+  destinationpath: s3://pg-backup-test
+  endpointURL: https://eu2.contabostorage.com
 
 
 monitoring:
   enabled: true
 
+Database-gitea:
+  giteadatabase:
+    secretName: giteadatabase
+    userSecretKey: username
+    passwordSecretKey: password
+    connectionStringSecretKey: connectionString
+
 gitea:
   enabled: false
+  config: 
+    database:
+      DB_TYPE: postgres
+      HOST: postgres-rw.postgres.svc.cluster.local
+      NAME: gitea
+  additionalConfigFromEnvs:
+    - name: ENV_TO_INI__DATABASE__USER
+      valueFrom:
+        secretKeyRef:
+          name: giteadatabase
+          key: username
+    - name: ENV_TO_INI__DATABASE__PASSWD
+      valueFrom:
+        secretKeyRef:
+          name: giteadatabase
+          key: password
+  admin:
+    username: gitea_admin
+    password: r8sA8CPHD9!bt6d
+    email: "gitea@local.domain"
 
 cert-issuers:
   letsencrypt: 
-    enabled: true
+    enabled: false
   zerossl: 
-    enabled: true
+    enabled: false
 
 prometheus: 
   retentionSize: 1Gi
@@ -24,9 +73,12 @@ grafana-operator:
   envFrom:
     - secretRef:
         name: grafana
+  admin:
+    user: YWRtaW4=
+    password: cGFzc3dvcmQ=
+  prometheus-datasource-url: http://prometheus-prometheus-kube-prometheus-prometheus.monitoring.svc.cluster.local:9090
+  loki-datasource-url: http://loki-grafana-loki-gateway.monitoring.svc.cluster.local:80
 
-postgres:
-  enabled: true
 
 vaultwarden:
   enabled: false
@@ -38,4 +90,11 @@ vaultwarden:
       enabled: true
       host: "smtp.ertia.cloud"
       from: "noreply@ertia.com"
+
+Database-vaultwarden:
+  vaultwarden:
+    secretName: vaultwarden-postgres
+    userSecretKey: username
+    passwordSecretKey: password
+    connectionStringSecretKey: connectionString
 

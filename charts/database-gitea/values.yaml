@@ -1,5 +1,5 @@
-  postgres:
-    secretName: postgres
+  superuser-secret:
+    secretName: superuser-secret
     secretKey: username
     passwordSecretKey: password
     

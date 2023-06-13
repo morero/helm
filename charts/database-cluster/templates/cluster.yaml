@@ -22,8 +22,8 @@ spec:
          name: app-secret
   backup:
     barmanObjectStore:
-      destinationPath: s3://pg-backup-test
-      endpointURL: https://eu2.contabostorage.com
+      destinationPath: {{ .Values.destinationpath }}
+      endpointURL: {{ .Values.endpointURL }}
       s3Credentials:
         accessKeyId:
           name: contabocredentials

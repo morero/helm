@@ -12,3 +12,6 @@
     secretName: contabocredentials
     secretKey: username
     passwordSecretKey: password 
+
+  destinationpath: s3://pg-backup-test
+  endpointURL: https://eu2.contabostorage.com
