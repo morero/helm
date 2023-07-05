@@ -88,6 +88,8 @@ spec:
           env:
             - name: GITEA_APP_INI
               value: /data/gitea/conf/app.ini
+            - name: ENV_TO_INI__ACTIONS__ENABLED
+              value: "true"
             - name: GITEA_CUSTOM
               value: /data/gitea
             - name: GITEA_WORK_DIR
