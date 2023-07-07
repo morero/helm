@@ -303,12 +303,12 @@ customConfig:
           - var_logs
          # - demo_logs
           - host_metrics
-      uri: "http://openobserve.monitoring1.svc.cluster.local:80/api/default/default/_json"
+      uri: "http://openobserve.monitoring.svc.cluster.local:80/api/default/default/_json"
       method: "post"
       auth:
         strategy: "basic"
         user: "admin@example.com"
-        password: "2VjiyfHpzcdcsTuN"
+        password: "VutFjZ8LUfmq7Q21"
       encoding:
         codec: "json"
         timestampFormat: "rfc3339"
@@ -317,11 +317,11 @@ customConfig:
       type: prometheus_remote_write
       inputs: 
           - host_metrics
-      endpoint: "http://openobserve.monitoring1.svc.cluster.local:80/api/default/prometheus/api/v1/write"
+      endpoint: "http://openobserve.monitoring.svc.cluster.local:80/api/default/prometheus/api/v1/write"
       auth:  
         strategy: "basic"
         user: "admin@example.com"
-        password: "2VjiyfHpzcdcsTuN"
+        password: "VutFjZ8LUfmq7Q21"
         
 
 

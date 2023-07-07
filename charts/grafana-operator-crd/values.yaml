@@ -1,0 +1,30 @@
+# -- If the operator should run in namespace-scope or not,
+# if true the operator will only be able to manage instances in the same namespace
+namespaceScope: false
+
+# -- If you want to run multiple replicas of the grafana-operator, this is not recommended.
+leaderElect: false
+
+# -- Sets the WATCH_NAMESPACE environment variable,
+# it defines which namespaces the operator should be listening for.
+# By default it's all namespaces, if you only want to listen for the same namespace as the operator is deployed to look at namespaceScope.
+watchNamespaces: ""
+
+  
+
+# -- grafana operator container resources
+resources: {}
+
+# -- pod priority class name
+priorityClassName: ""
+
+# -- pod node selector
+nodeSelector: {}
+
+# -- pod tolerations
+tolerations: []
+
+# -- pod affinity
+affinity: {}
+
+

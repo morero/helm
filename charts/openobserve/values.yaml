@@ -79,7 +79,7 @@ auth:
   # -- email address for root user
   rootUserEmail: "admin@example.com"
   # -- A random initial password will be set if left empty
-  initialPassword: ""
+  initialPassword: "password"
 
 storage:
   dataDir: "/data"
